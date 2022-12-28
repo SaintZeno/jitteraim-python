@@ -1,5 +1,5 @@
 from modules.helpers import config_generator, read_config
-from modules.recoil_patterns import recoil_patterns_jitter
+from modules.recoil_patterns_jitter import recoil_patterns
 from modules.native_controller import MouseMoveTo
 from modules.banners import print_banner
 from mss import mss
