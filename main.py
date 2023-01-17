@@ -30,7 +30,7 @@ except FileNotFoundError:
 toggle_button = "delete"
 
 def weapon_screenshot(select_weapon):
-    if select_weapon == "one":
+    if select_weapon in ["one", "1", 1]:
         image = sct.grab({
             "left": data["scan_coord_one"]["left"],
             "top": data["scan_coord_one"]["top"],
@@ -40,7 +40,7 @@ def weapon_screenshot(select_weapon):
         image = cv.cvtColor(np.array(image), cv.COLOR_RGB2GRAY)
         _, image = cv.threshold(image, 140, 255, cv.THRESH_BINARY)
         return image
-    elif select_weapon == "two":
+    elif select_weapon in ["two", "2", 2]:
         image = sct.grab({
             "left": data["scan_coord_two"]["left"],
             "top": data["scan_coord_two"]["top"],
@@ -78,6 +78,18 @@ def left_click_state():
     else:
         return left_click < 0
 
+def get_active_weapon(weapon_slot_num):
+    active_weapon = "None"
+    try:
+        sc = weapon_screenshot(weapon_slot_num)
+        active_weapon = read_weapon(sc).strip()
+        recognized_weapon = True
+    except IndexError:
+        recognized_weapon = False
+        #continue
+    return active_weapon, recognized_weapon
+
+
 active_state = False
 last_toggle_state = False
 active_weapon_slot = 1
@@ -86,6 +98,7 @@ supported_weapon = False
 recognized_weapon = False
 
 print_banner("double", "header-start", "user-options")
+
 
 # LISTENER: Keyboard & Mouse Input
 try:
@@ -103,22 +116,19 @@ try:
         # OPTION: Read Weapon-Slot & Apply Recoil-Pattern
         if keyboard.is_pressed("1"):
             active_weapon_slot = 1
-            try:
-                active_weapon = read_weapon(weapon_screenshot("one"))
-                recognized_weapon = True
-            except IndexError:
-                recognized_weapon = False
-                continue
-
+            active_weapon, recognized_weapon = get_active_weapon(active_weapon_slot)
+            ## try again if it couldnt pull anything
+            if active_weapon in ["None", None]:
+                time.sleep(0.01)
+                active_weapon, recognized_weapon = get_active_weapon(active_weapon_slot)
         # OPTION: Read Weapon-Slot & Apply Recoil-Pattern
         if keyboard.is_pressed("2"):
             active_weapon_slot = 2
-            try:
-                active_weapon = read_weapon(weapon_screenshot("two"))
-                recognized_weapon = True
-            except IndexError:
-                recognized_weapon = False
-                continue
+            active_weapon, recognized_weapon = get_active_weapon(active_weapon_slot)
+            ## try again if it couldnt pull anything
+            if active_weapon in ["None", None]:
+                time.sleep(0.001)
+                active_weapon, recognized_weapon = get_active_weapon(active_weapon_slot)
 
         # ACTION: Apply Recoil-Control w/ Left-Click
         if left_click_state() and active_state and recognized_weapon:
